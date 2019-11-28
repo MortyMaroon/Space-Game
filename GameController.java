@@ -8,6 +8,12 @@ public class GameController {
     private AsteroidController asteroidController;
     private BulletController bulletController;
     private Hero hero;
+    private DropController dropController;
+    private ParticleController particleController;
+
+    public ParticleController getParticleController() { return particleController; }
+
+    public DropController getDropController() { return dropController; }
 
     public AsteroidController getAsteroidController() {
         return asteroidController;
@@ -26,6 +32,8 @@ public class GameController {
     }
 
     public GameController() {
+        this.particleController = new ParticleController();
+        this.dropController = new DropController(this);
         this.background = new Background(this);
         this.hero = new Hero(this);
         this.asteroidController = new AsteroidController(this);
@@ -37,12 +45,13 @@ public class GameController {
     }
 
     public void update(float dt) {
+        dropController.update(dt);
+        particleController.update(dt);
         background.update(dt);
         hero.update(dt);
         asteroidController.update(dt);
         bulletController.update(dt);
         checkCollisions();
-        checkCollisionsHero();
     }
 
     public void checkCollisions() {
@@ -59,14 +68,30 @@ public class GameController {
                 }
             }
         }
-    }
 
-    public void checkCollisionsHero(){
         for (int i = 0; i < asteroidController.getActiveList().size(); i++) {
             Asteroid asteroid = asteroidController.getActiveList().get(i);
             if (asteroid.getHitArea().contains(hero.getPosition())) {
                 asteroid.takeDamage(1);
-                hero.getDamage(10);
+                hero.takeDamage(10);
+            }
+        }
+
+        for (int i = 0; i < dropController.getActiveList().size(); i++) {
+            Drop drop = dropController.getActiveList().get(i);
+            if (drop.getHitArea().contains(hero.getHitArea())){
+                drop.deactivate();
+                switch (MathUtils.random(0,3)){
+                    case 1:
+                        hero.takeMoney(drop.getMoney());
+                        break;
+                    case 2:
+                        hero.takeBullet(drop.getBullet());
+                        break;
+                    case 3:
+                        hero.takeHealth(drop.getHealth());
+                        break;
+                }
             }
         }
     }
